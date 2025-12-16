@@ -1,6 +1,7 @@
 package app.mony.api.domains.user;
 
 import app.mony.api.enums.user.UserRole;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -30,6 +31,8 @@ public class User implements UserDetails {
     private UUID id;
     private String name;
     private String email;
+
+    @JsonIgnore
     private String password;
 
     @Enumerated(EnumType.STRING)
