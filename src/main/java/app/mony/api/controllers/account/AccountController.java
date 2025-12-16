@@ -4,6 +4,7 @@ import app.mony.api.DTOs.account.request.AccountRequestDTO;
 import app.mony.api.DTOs.account.response.AccountResponseDTO;
 import app.mony.api.domains.account.Account;
 import app.mony.api.domains.user.User;
+import app.mony.api.infra.exceptions.EntityNotFoundException;
 import app.mony.api.services.account.AccountService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/accounts")
@@ -37,5 +39,15 @@ public class AccountController {
         List<AccountResponseDTO> accounts = accountService.getAccountsByUser(user);
 
         return ResponseEntity.ok(accounts);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<AccountResponseDTO> getAccount(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal User user
+    ) {
+        return accountService.getAccountById(id, user)
+                .map(account -> ResponseEntity.ok(new AccountResponseDTO(account)))
+                .orElseThrow(() -> new EntityNotFoundException("Account not found!"));
     }
 }

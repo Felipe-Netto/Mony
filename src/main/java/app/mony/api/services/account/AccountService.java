@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class AccountService {
@@ -35,5 +37,9 @@ public class AccountService {
                 .stream()
                 .map(AccountResponseDTO::new)
                 .toList();
+    }
+
+    public Optional<Account> getAccountById(UUID id, User user) {
+        return accountRepository.findByIdAndUser(id, user);
     }
 }
