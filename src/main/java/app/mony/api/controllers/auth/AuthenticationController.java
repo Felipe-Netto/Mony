@@ -3,19 +3,17 @@ package app.mony.api.controllers.auth;
 import app.mony.api.DTOs.auth.request.LoginRequestDTO;
 import app.mony.api.DTOs.auth.request.RegisterRequestDTO;
 import app.mony.api.DTOs.auth.response.LoginResponseDTO;
+import app.mony.api.DTOs.auth.response.UserResponseDTO;
 import app.mony.api.domains.user.User;
 import app.mony.api.repositories.user.UserRepository;
 import app.mony.api.services.auth.TokenService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -35,8 +33,8 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO loginDTO) {
-        var usernamePassword = new UsernamePasswordAuthenticationToken(loginDTO.email(), loginDTO.password());
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO loginRequestDTO) {
+        var usernamePassword = new UsernamePasswordAuthenticationToken(loginRequestDTO.email(), loginRequestDTO.password());
         var auth = this.authenticationManager.authenticate(usernamePassword);
 
         User user = (User) auth.getPrincipal();
@@ -46,14 +44,25 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody @Valid RegisterRequestDTO registerDTO) {
-        if (this.userRepository.findByEmail(registerDTO.email()).isPresent()) return ResponseEntity.badRequest().build();
+    public ResponseEntity<String> register(@RequestBody @Valid RegisterRequestDTO registerRequestDTO) {
+        if (this.userRepository.findByEmail(registerRequestDTO.email()).isPresent()) return ResponseEntity.badRequest().build();
 
-        String encriptedPassword = new BCryptPasswordEncoder().encode(registerDTO.password());
-        User user = new User(registerDTO.name(), registerDTO.email(), encriptedPassword, registerDTO.role());
+        String encriptedPassword = new BCryptPasswordEncoder().encode(registerRequestDTO.password());
+        User user = new User(registerRequestDTO.name(), registerRequestDTO.email(), encriptedPassword, registerRequestDTO.role());
 
         this.userRepository.save(user);
 
         return ResponseEntity.ok("User created successfully");
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> me(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            throw new IllegalStateException("Unauthorized");
+        }
+
+        UserResponseDTO userResponseDTO = new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getRole());
+
+        return ResponseEntity.ok(userResponseDTO);
     }
 }
