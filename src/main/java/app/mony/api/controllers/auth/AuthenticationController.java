@@ -8,6 +8,7 @@ import app.mony.api.domains.user.User;
 import app.mony.api.repositories.user.UserRepository;
 import app.mony.api.services.auth.TokenService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -44,23 +45,26 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody @Valid RegisterRequestDTO registerRequestDTO) {
-        if (this.userRepository.findByEmail(registerRequestDTO.email()).isPresent()) return ResponseEntity.badRequest().build();
+    public ResponseEntity<UserResponseDTO> register(@RequestBody @Valid RegisterRequestDTO registerRequestDTO) {
+        if (this.userRepository.findByEmail(registerRequestDTO.email()).isPresent())
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
 
         String encriptedPassword = new BCryptPasswordEncoder().encode(registerRequestDTO.password());
         User user = new User(registerRequestDTO.name(), registerRequestDTO.email(), encriptedPassword, registerRequestDTO.role());
 
         this.userRepository.save(user);
 
-        return ResponseEntity.ok("User created successfully");
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new UserResponseDTO(
+                        user.getId(),
+                        user.getName(),
+                        user.getEmail(),
+                        user.getRole()
+                ));
     }
 
     @GetMapping("/me")
     public ResponseEntity<UserResponseDTO> me(@AuthenticationPrincipal User user) {
-        if (user == null) {
-            throw new IllegalStateException("Unauthorized");
-        }
-
         UserResponseDTO userResponseDTO = new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getRole());
 
         return ResponseEntity.ok(userResponseDTO);

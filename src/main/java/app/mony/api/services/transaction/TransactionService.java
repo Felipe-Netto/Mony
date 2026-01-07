@@ -5,12 +5,13 @@ import app.mony.api.DTOs.transaction.response.TransactionResponseDTO;
 import app.mony.api.domains.account.Account;
 import app.mony.api.domains.transaction.Transaction;
 import app.mony.api.domains.user.User;
-import app.mony.api.enums.transaction.TransactionType;
 import app.mony.api.infra.exceptions.EntityNotFoundException;
 import app.mony.api.repositories.account.AccountRepository;
 import app.mony.api.repositories.transaction.TransactionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class TransactionService {
@@ -47,5 +48,19 @@ public class TransactionService {
                 account.getName(),
                 account.getType()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<TransactionResponseDTO> getTransactions(User user) {
+        return transactionRepository.findByAccountUser(user).stream()
+                .map(transaction -> new TransactionResponseDTO(
+                        transaction.getId(),
+                        transaction.getAmount(),
+                        transaction.getDescription(),
+                        transaction.getCreatedAt(),
+                        transaction.getAccount().getName(),
+                        transaction.getAccount().getType()
+                ))
+                .toList();
     }
 }

@@ -7,6 +7,7 @@ import app.mony.api.domains.user.User;
 import app.mony.api.infra.exceptions.EntityNotFoundException;
 import app.mony.api.services.account.AccountService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +30,7 @@ public class AccountController {
             @AuthenticationPrincipal User user
     ) {
         Account account = accountService.create(accountRequestDTO, user);
-        return ResponseEntity.ok(new AccountResponseDTO(account));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new AccountResponseDTO(account));
     }
 
     @GetMapping
